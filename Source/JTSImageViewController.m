@@ -201,6 +201,27 @@ typedef struct {
 
 #pragma mark - UIViewController
 
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+    
+    if (orientation == UIDeviceOrientationPortrait) {
+        NSLog(@"Portrait");
+        return UIInterfaceOrientationPortrait;
+    } else if (orientation == UIDeviceOrientationPortraitUpsideDown) {
+        NSLog(@"UpsideDown -> Portrait");
+        return UIInterfaceOrientationPortrait;
+    } else if (orientation == UIDeviceOrientationLandscapeLeft) {
+        NSLog(@"Landscape Left");
+        return UIInterfaceOrientationLandscapeLeft;
+    } else if (orientation == UIDeviceOrientationLandscapeRight) {
+        NSLog(@"Landscape Right");
+        return UIInterfaceOrientationLandscapeRight;
+    } else {
+        NSLog(@"Others");
+        return [UIApplication sharedApplication].statusBarOrientation;
+    }
+}
+
 - (NSUInteger)supportedInterfaceOrientations {
     
     /*
@@ -221,21 +242,18 @@ typedef struct {
     NSUInteger mask;
     
     if (self.flags.viewHasAppeared == NO) {
-        switch ([UIApplication sharedApplication].statusBarOrientation) {
+        switch ([self preferredInterfaceOrientationForPresentation]) {
             case UIInterfaceOrientationLandscapeLeft:
-                mask = UIInterfaceOrientationMaskLandscapeLeft;
+                mask = UIInterfaceOrientationMaskLandscape;
                 break;
             case UIInterfaceOrientationLandscapeRight:
-                mask = UIInterfaceOrientationMaskLandscapeRight;
+                mask = UIInterfaceOrientationMaskLandscape;
                 break;
             case UIInterfaceOrientationPortrait:
                 mask = UIInterfaceOrientationMaskPortrait;
                 break;
-            case UIInterfaceOrientationPortraitUpsideDown:
-                mask = UIInterfaceOrientationMaskPortraitUpsideDown;
-                break;
             default:
-                mask = UIInterfaceOrientationPortrait;
+                mask = UIInterfaceOrientationMaskPortrait;
                 break;
         }
     }
