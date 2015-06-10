@@ -1270,6 +1270,14 @@ typedef struct {
     UIViewController *presentingViewController = viewController.view.window.rootViewController;
     while (presentingViewController.presentedViewController) presentingViewController = presentingViewController.presentedViewController;
     
+    // Use UIBlurEffect if available
+    
+    if (([[[UIDevice currentDevice] systemVersion] compare:@"8" options:NSNumericSearch] == NSOrderedDescending)) {
+        UIVisualEffectView *blurEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        [blurEffectView setFrame:presentingViewController.view.bounds];
+        return blurEffectView;
+    }
+    
     // We'll draw the presentingViewController's view into a context
     // that is scaled down by a factor of 4, which will dramatically improve
     // the performance of JTS_applyBlurWithRadius:tintColor:saturationDeltaFactor:maskImage:
