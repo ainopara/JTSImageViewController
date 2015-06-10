@@ -1620,7 +1620,15 @@ typedef struct {
 
 - (void)updateDimmingViewForCurrentZoomScale:(BOOL)animated {
     CGFloat zoomScale = self.scrollView.zoomScale;
-    CGFloat targetAlpha = (zoomScale > 1) ? 1.0f : self.alphaForBackgroundDimmingOverlay;
+    CGFloat baseAlpha = self.alphaForBackgroundDimmingOverlay;
+    CGFloat targetAlpha = (zoomScale > 1.0) ? baseAlpha * ((zoomScale - 1.0)/2.0 + 1.0) : baseAlpha * (zoomScale - 0.5) * 2.0;
+    if (targetAlpha > 1.0) {
+        targetAlpha = 1.0;
+    }
+    if (targetAlpha < 0.0) {
+        targetAlpha = 0.0;
+    }
+    NSLog(@"%f",targetAlpha);
     CGFloat duration = (animated) ? 0.35 : 0;
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionBeginFromCurrentState animations:^{
         if ([self.animationDelegate respondsToSelector:@selector(imageViewer:willAdjustInterfaceForZoomScale:withContainerView:duration:)]) {
