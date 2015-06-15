@@ -1273,7 +1273,7 @@ typedef struct {
     // Use UIBlurEffect if available
     
     if (([[[UIDevice currentDevice] systemVersion] compare:@"8" options:NSNumericSearch] == NSOrderedDescending)) {
-        UIVisualEffectView *blurEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        UIVisualEffectView *blurEffectView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
         [blurEffectView setFrame:presentingViewController.view.bounds];
         return blurEffectView;
     }
@@ -1628,7 +1628,6 @@ typedef struct {
     if (targetAlpha < 0.0) {
         targetAlpha = 0.0;
     }
-    NSLog(@"%f",targetAlpha);
     CGFloat duration = (animated) ? 0.35 : 0;
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionBeginFromCurrentState animations:^{
         if ([self.animationDelegate respondsToSelector:@selector(imageViewer:willAdjustInterfaceForZoomScale:withContainerView:duration:)]) {
