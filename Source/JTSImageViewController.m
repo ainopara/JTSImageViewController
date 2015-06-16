@@ -774,6 +774,7 @@ typedef struct {
         
         self.scrollView.alpha = 0;
         self.scrollView.frame = self.view.bounds;
+        self.scrollView.contentOffset = CGPointMake(0,0);
         [self updateScrollViewAndImageViewForCurrentMetrics];
         CGFloat scaling = JTSImageViewController_MaxScalingForExpandingOffscreenStyleTransition;
         self.scrollView.transform = CGAffineTransformMakeScale(scaling, scaling);
