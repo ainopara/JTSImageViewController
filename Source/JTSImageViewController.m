@@ -715,7 +715,7 @@ typedef struct {
                      }
                      weakSelf.imageView.frame = endFrameForImageView;
                      
-                     CGPoint endCenterForImageView = CGPointMake(weakSelf.view.bounds.size.width/2.0f, weakSelf.view.bounds.size.height/2.0f);
+                     CGPoint endCenterForImageView = CGPointMake(endFrameForImageView.origin.x + endFrameForImageView.size.width/2.0f, endFrameForImageView.origin.y + endFrameForImageView.size.height/2.0f);
                      weakSelf.imageView.center = endCenterForImageView;
                      
                      if (weakSelf.image == nil) {
@@ -728,7 +728,7 @@ typedef struct {
                      weakSelf.scrollView.frame = weakSelf.view.bounds;
                      _flags.isManuallyResizingTheScrollViewFrame = NO;
                      [weakSelf.scrollView addSubview:weakSelf.imageView];
-                     
+                     weakSelf.scrollView.contentOffset = CGPointMake(0,0);
                      _flags.isTransitioningFromInitialModalToInteractiveState = NO;
                      _flags.isAnimatingAPresentationOrDismissal = NO;
                      _flags.isPresented = YES;
@@ -1543,8 +1543,9 @@ typedef struct {
 
 - (CGRect)resizedFrameForAutorotatingImageView:(CGSize)imageSize {
     CGRect frame = self.view.bounds;
-    CGFloat screenWidth = frame.size.width * self.scrollView.zoomScale;
-    CGFloat screenHeight = frame.size.height * self.scrollView.zoomScale;
+    CGFloat imageRatio = imageSize.width/imageSize.height;
+    CGFloat screenWidth = frame.size.width;
+    CGFloat screenHeight = frame.size.height;
     CGFloat targetWidth = screenWidth;
     CGFloat targetHeight = screenHeight;
     CGFloat nativeHeight = screenHeight;
@@ -1566,7 +1567,16 @@ typedef struct {
             targetWidth = screenHeight / (nativeHeight / nativeWidth);
         }
     }
-    frame.size = CGSizeMake(targetWidth, targetHeight);
+    CGFloat scale = 1;
+    if (imageRatio < 0.3) {
+        scale = screenWidth / targetWidth;
+        self.scrollView.zoomScale = scale;
+    }
+    if (imageRatio > 3) {
+        scale = screenHeight / targetHeight;
+        self.scrollView.zoomScale = scale;
+    }
+    frame.size = CGSizeMake(targetWidth * scale, targetHeight * scale);
     frame.origin = CGPointMake(0, 0);
     return frame;
 }
