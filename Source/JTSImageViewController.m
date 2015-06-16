@@ -714,8 +714,8 @@ typedef struct {
                          endFrameForImageView = [weakSelf resizedFrameForAutorotatingImageView:weakSelf.imageInfo.referenceRect.size];
                      }
                      weakSelf.imageView.frame = endFrameForImageView;
-                     
-                     CGPoint endCenterForImageView = CGPointMake(endFrameForImageView.origin.x + endFrameForImageView.size.width/2.0f, endFrameForImageView.origin.y + endFrameForImageView.size.height/2.0f);
+                     UIEdgeInsets inset = [self contentInsetForScrollView:self.scrollView.zoomScale];
+                     CGPoint endCenterForImageView = CGPointMake(inset.left + endFrameForImageView.origin.x + endFrameForImageView.size.width/2.0f, inset.top + endFrameForImageView.origin.y + endFrameForImageView.size.height/2.0f);
                      weakSelf.imageView.center = endCenterForImageView;
                      
                      if (weakSelf.image == nil) {
