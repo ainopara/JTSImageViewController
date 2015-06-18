@@ -1578,12 +1578,20 @@ typedef struct {
     }
     CGFloat scale = 1;
     if (imageRatio < 0.3) {
-        scale = screenWidth / targetWidth;
+        CGFloat preferedWidth = imageSize.width < screenWidth ? imageSize.width : screenWidth;
+        scale = preferedWidth / targetWidth;
+        if (scale > self.scrollView.maximumZoomScale) {
+            scale = self.scrollView.maximumZoomScale;
+        }
         self.scrollView.zoomScale = scale;
     }
     if (imageRatio > 3) {
-        scale = screenHeight / targetHeight;
+        CGFloat preferedHeight = imageSize.height < screenHeight ? imageSize.height : screenHeight;
+        scale = preferedHeight / targetHeight;
         self.scrollView.zoomScale = scale;
+        if (scale > self.scrollView.maximumZoomScale) {
+            scale = self.scrollView.maximumZoomScale;
+        }
     }
     frame.size = CGSizeMake(targetWidth * scale, targetHeight * scale);
     frame.origin = CGPointMake(0, 0);
