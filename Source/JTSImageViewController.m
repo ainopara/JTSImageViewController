@@ -61,7 +61,7 @@ typedef struct {
     BOOL imageDownloadFailed;
 } JTSImageViewControllerFlags;
 
-#define USE_DEBUG_SLOW_ANIMATIONS 0
+#define USE_DEBUG_SLOW_ANIMATIONS 1
 
 ///--------------------------------------------------------------------------------------------------------------------
 /// Anonymous Category
@@ -291,10 +291,12 @@ typedef struct {
 }
 
 - (void)viewDidLayoutSubviews {
+    NSLog(@"viewDidLayoutSubviews");
     [self updateLayoutsForCurrentOrientation];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
+    NSLog(@"viewWillAppear");
     [super viewWillAppear:animated];
     if (self.lastUsedOrientation != [UIApplication sharedApplication].statusBarOrientation) {
         self.lastUsedOrientation = [UIApplication sharedApplication].statusBarOrientation;
@@ -325,6 +327,7 @@ typedef struct {
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_7_1
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    NSLog(@"viewWillTransitionToSize:%f, %f", size.width, size.height);
     _flags.rotationTransformIsDirty = YES;
     _flags.isRotating = YES;
     typeof(self) __weak weakSelf = self;
@@ -344,7 +347,7 @@ typedef struct {
 #endif
 
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
-    
+    NSLog(@"deviceOrientationDidChange");
     NSString *systemVersion = [UIDevice currentDevice].systemVersion;
     if (systemVersion.floatValue < 8.0) {
         // Early Return
@@ -386,6 +389,7 @@ typedef struct {
 #pragma mark - Setup
 
 - (void)setupImageAndDownloadIfNecessary:(JTSImageInfo *)imageInfo {
+    NSLog(@"setupImageAndDownloadIfNecessary");
     if (imageInfo.image) {
         self.image = imageInfo.image;
     }
@@ -422,7 +426,7 @@ typedef struct {
 }
 
 - (void)viewDidLoadForImageMode {
-    
+    NSLog(@"viewDidLoadForImageMode");
     self.view.backgroundColor = [UIColor blackColor];
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     
@@ -434,7 +438,7 @@ typedef struct {
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.view.bounds];
     self.scrollView.delegate = self;
     self.scrollView.zoomScale = 1.0f;
-    self.scrollView.maximumZoomScale = 8.0f;
+    self.scrollView.maximumZoomScale = 100.0f;
     self.scrollView.scrollEnabled = NO;
     self.scrollView.isAccessibilityElement = YES;
     self.scrollView.accessibilityLabel = self.accessibilityLabel;
@@ -535,7 +539,7 @@ typedef struct {
 }
 
 - (void)setupImageModeGestureRecognizers {
-    
+    NSLog(@"setupImageModeGestureRecognizers");
     self.doubleTapperPhoto = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(imageDoubleTapped:)];
     self.doubleTapperPhoto.numberOfTapsRequired = 2;
     self.doubleTapperPhoto.delegate = self;
@@ -561,6 +565,7 @@ typedef struct {
 }
 
 - (void)setupTextViewTapGestureRecognizer {
+    NSLog(@"setupTextViewTapGestureRecognizer");
     self.singleTapperText = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(textViewSingleTapped:)];
     self.singleTapperText.delegate = self;
     [self.textView addGestureRecognizer:self.singleTapperText];
@@ -569,7 +574,7 @@ typedef struct {
 #pragma mark - Presentation
 
 - (void)showImageViewerByExpandingFromOriginalPositionFromViewController:(UIViewController *)viewController {
-    
+    NSLog(@"showImageViewerByExpandingFromOriginalPositionFromViewController");
     _flags.isAnimatingAPresentationOrDismissal = YES;
     self.view.userInteractionEnabled = NO;
     
@@ -746,7 +751,7 @@ typedef struct {
 }
 
 - (void)showImageViewerByScalingDownFromOffscreenPositionWithViewController:(UIViewController *)viewController {
-    
+    NSLog(@"showImageViewerByScalingDownFromOffscreenPositionWithViewController");
     _flags.isAnimatingAPresentationOrDismissal = YES;
     self.view.userInteractionEnabled = NO;
     
@@ -999,7 +1004,7 @@ typedef struct {
 #pragma mark - Dismissal
 
 - (void)dismissByCollapsingImageBackToOriginalPosition {
-    
+    NSLog(@"dismissByCollapsingImageBackToOriginalPosition");
     self.view.userInteractionEnabled = NO;
     _flags.isAnimatingAPresentationOrDismissal = YES;
     _flags.isDismissing = YES;
@@ -1338,7 +1343,7 @@ typedef struct {
 #pragma mark - Interface Updates
 
 - (void)updateInterfaceWithImage:(UIImage *)image {
-    
+    NSLog(@"updateInterfaceWithImage");
     if (image) {
         self.image = image;
         self.imageView.image = image;
@@ -1354,7 +1359,7 @@ typedef struct {
 }
 
 - (void)updateLayoutsForCurrentOrientation {
-    
+    NSLog(@"updateLayoutsForCurrentOrientation");
     if (self.mode == JTSImageViewControllerMode_Image) {
         [self updateScrollViewAndImageViewForCurrentMetrics];
         self.progressContainer.center = CGPointMake(self.view.bounds.size.width/2.0f, self.view.bounds.size.height/2.0f);
@@ -1481,6 +1486,7 @@ typedef struct {
             self.imageView.frame = [self resizedFrameForAutorotatingImageView:self.imageInfo.referenceRect.size];
         }
         self.scrollView.contentSize = self.imageView.frame.size;
+        NSLog(@"%f",self.scrollView.contentSize.width);
         self.scrollView.contentInset = [self contentInsetForScrollView:self.scrollView.zoomScale];
     }
 }
@@ -1498,6 +1504,7 @@ typedef struct {
 }
 
 - (UIEdgeInsets)contentInsetForScrollView:(CGFloat)targetZoomScale {
+    NSLog(@"contentInsetForScrollView:%f",targetZoomScale);
     UIEdgeInsets inset = UIEdgeInsetsZero;
     CGFloat boundsHeight = self.scrollView.bounds.size.height;
     CGFloat boundsWidth = self.scrollView.bounds.size.width;
@@ -1542,7 +1549,9 @@ typedef struct {
 }
 
 - (CGRect)resizedFrameForAutorotatingImageView:(CGSize)imageSize {
+    NSLog(@"resizedFrameForAutorotatingImageView:w%f,h%f",imageSize.width, imageSize.height);
     CGRect frame = self.view.bounds;
+    //CGFloat frameRatio = frame.size.width/frame.size.height;
     CGFloat imageRatio = imageSize.width/imageSize.height;
     CGFloat screenWidth = frame.size.width;
     CGFloat screenHeight = frame.size.height;
@@ -1588,7 +1597,7 @@ typedef struct {
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-    
+    NSLog(@"scrollViewDidZoom");
     if (_flags.imageIsFlickingAwayForDismissal) {
         return;
     }
@@ -1605,7 +1614,7 @@ typedef struct {
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale {
-    
+    NSLog(@"scrollViewDidEndZooming");
     if (_flags.imageIsFlickingAwayForDismissal) {
         return;
     }
