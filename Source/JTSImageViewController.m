@@ -617,12 +617,19 @@ typedef struct {
         self.imageView.frame = referenceFrameInMyView;
         self.imageView.layer.cornerRadius = self.imageInfo.referenceCornerRadius;
         [self updateScrollViewAndImageViewForCurrentMetrics];
-        
-        //BOOL mustRotateDuringTransition = ([UIDevice currentDevice].orientation != _startingInfo.startingInterfaceOrientation);
+        /*
+        if (mustRotateDuringTransition) {
+            weakSelf.imageView.frame = newEndingRect;
+            weakSelf.imageView.center = centerInRect;
+        }*/
         BOOL mustRotateDuringTransition = ([UIApplication sharedApplication].statusBarOrientation != _startingInfo.startingInterfaceOrientation);
         if (mustRotateDuringTransition) {
-            CGRect newStartingRect = [self.snapshotView convertRect:_startingInfo.startingReferenceFrameForThumbnail toView:self.view];
+            CGRect newStartingRect = _startingInfo.startingReferenceFrameForThumbnail;
+            CGRect rectForCentering = [self.snapshotView convertRect:newStartingRect toView:self.view];
+            CGPoint centerInRect = CGPointMake(rectForCentering.origin.x+rectForCentering.size.width/2.0f, rectForCentering.origin.y+rectForCentering.size.height/2.0f);
+            
             self.imageView.frame = newStartingRect;
+            self.imageView.center = centerInRect;
             [self updateScrollViewAndImageViewForCurrentMetrics];
             self.imageView.transform = self.snapshotView.transform;
         }
