@@ -90,7 +90,7 @@ typedef struct {
 
 // Views
 @property (strong, nonatomic) UIView *progressContainer;
-@property (strong, nonatomic) UIView *outerContainerForScrollView;
+//@property (strong, nonatomic) UIView *outerContainerForScrollView; // Not Used
 @property (strong, nonatomic) UIView *snapshotView;
 @property (strong, nonatomic) UIView *blurredSnapshotView;
 @property (strong, nonatomic) UIView *blackBackdrop;
@@ -456,6 +456,7 @@ typedef struct {
     self.imageView.isAccessibilityElement = NO;
     self.imageView.clipsToBounds = YES;
     self.imageView.layer.allowsEdgeAntialiasing = YES;
+    self.imageView.hidden = YES;
     if ([self.optionsDelegate respondsToSelector:@selector(imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:)]) {
         if ([self.optionsDelegate imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:self]) {
             self.imageView.alpha = 0;
@@ -579,7 +580,7 @@ typedef struct {
     NSLog(@"showImageViewerByExpandingFromOriginalPositionFromViewController");
     _flags.isAnimatingAPresentationOrDismissal = YES;
     self.view.userInteractionEnabled = NO;
-    
+
     self.snapshotView = [self snapshotFromParentmostViewController:viewController];
     
     if (self.backgroundOptions & JTSImageViewControllerBackgroundOption_Blurred) {
@@ -625,6 +626,7 @@ typedef struct {
             [self updateScrollViewAndImageViewForCurrentMetrics];
             self.imageView.transform = self.snapshotView.transform;
         }
+        self.imageView.hidden = NO;
         
         if ([self.optionsDelegate respondsToSelector:@selector(imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:)]) {
             if ([self.optionsDelegate imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:self]) {
@@ -768,7 +770,7 @@ typedef struct {
     _startingInfo.startingReferenceFrameForThumbnailInPresentingViewControllersOriginalOrientation = [self.view convertRect:referenceFrameInWindow fromView:nil];
     
     [self.scrollView addSubview:self.imageView];
-    
+    self.imageView.hidden = NO;
     [viewController presentViewController:self animated:NO completion:^{
         
         if ([UIApplication sharedApplication].statusBarOrientation != _startingInfo.startingInterfaceOrientation) {
