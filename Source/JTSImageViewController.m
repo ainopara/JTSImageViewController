@@ -227,7 +227,7 @@ typedef struct {
      */
     
     NSUInteger mask;
-    
+    /*
     if (self.flags.viewHasAppeared == NO) {
         switch ([UIApplication sharedApplication].statusBarOrientation) {
             case UIInterfaceOrientationLandscapeLeft:
@@ -247,7 +247,8 @@ typedef struct {
                 break;
         }
     }
-    else if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+    else */
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         mask = UIInterfaceOrientationMaskAll;
     } else {
         mask = UIInterfaceOrientationMaskAllButUpsideDown;
@@ -309,7 +310,7 @@ typedef struct {
     [super viewDidAppear:animated];
     _flags.viewHasAppeared = YES;
 }
-
+#pragma mark - Rotating Methods Only Used In iOS7
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     self.lastUsedOrientation = toInterfaceOrientation;
     _flags.rotationTransformIsDirty = YES;
@@ -324,7 +325,7 @@ typedef struct {
         _flags.isRotating = NO;
     });
 }
-
+#pragma mark - Rotating Event Marker
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_7_1
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     NSLog(@"viewWillTransitionToSize:%f, %f", size.width, size.height);
@@ -332,10 +333,10 @@ typedef struct {
     _flags.isRotating = YES;
     typeof(self) __weak weakSelf = self;
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        typeof(self) strongSelf = weakSelf;
-        [strongSelf cancelCurrentImageDrag:NO];
-        [strongSelf updateLayoutsForCurrentOrientation];
-        [strongSelf updateDimmingViewForCurrentZoomScale:NO];
+        //typeof(self) strongSelf = weakSelf;
+        //[strongSelf cancelCurrentImageDrag:NO];
+        //[strongSelf updateLayoutsForCurrentOrientation];
+        //[strongSelf updateDimmingViewForCurrentZoomScale:NO];
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         typeof(self) strongSelf = weakSelf;
         strongSelf.lastUsedOrientation = [UIApplication sharedApplication].statusBarOrientation;
@@ -348,6 +349,7 @@ typedef struct {
 
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
     NSLog(@"deviceOrientationDidChange");
+    return;
     NSString *systemVersion = [UIDevice currentDevice].systemVersion;
     if (systemVersion.floatValue < 8.0) {
         // Early Return
@@ -615,17 +617,13 @@ typedef struct {
         self.imageView.layer.cornerRadius = self.imageInfo.referenceCornerRadius;
         [self updateScrollViewAndImageViewForCurrentMetrics];
         
+        //BOOL mustRotateDuringTransition = ([UIDevice currentDevice].orientation != _startingInfo.startingInterfaceOrientation);
         BOOL mustRotateDuringTransition = ([UIApplication sharedApplication].statusBarOrientation != _startingInfo.startingInterfaceOrientation);
         if (mustRotateDuringTransition) {
             CGRect newStartingRect = [self.snapshotView convertRect:_startingInfo.startingReferenceFrameForThumbnail toView:self.view];
             self.imageView.frame = newStartingRect;
             [self updateScrollViewAndImageViewForCurrentMetrics];
             self.imageView.transform = self.snapshotView.transform;
-            CGPoint centerInRect = CGPointMake(_startingInfo.startingReferenceFrameForThumbnail.origin.x
-                                               +_startingInfo.startingReferenceFrameForThumbnail.size.width/2.0f,
-                                               _startingInfo.startingReferenceFrameForThumbnail.origin.y
-                                               +_startingInfo.startingReferenceFrameForThumbnail.size.height/2.0f);
-            self.imageView.center = centerInRect;
         }
         
         if ([self.optionsDelegate respondsToSelector:@selector(imageViewerShouldFadeThumbnailsDuringPresentationAndDismissal:)]) {
@@ -1360,6 +1358,7 @@ typedef struct {
 
 - (void)updateLayoutsForCurrentOrientation {
     NSLog(@"updateLayoutsForCurrentOrientation");
+    NSLog(@"%d",_flags.isRotating);
     if (self.mode == JTSImageViewControllerMode_Image) {
         [self updateScrollViewAndImageViewForCurrentMetrics];
         self.progressContainer.center = CGPointMake(self.view.bounds.size.width/2.0f, self.view.bounds.size.height/2.0f);
@@ -1468,7 +1467,7 @@ typedef struct {
 }
 
 - (void)updateScrollViewAndImageViewForCurrentMetrics {
-    
+    NSLog(@"updateScrollViewAndImageViewForCurrentMetrics");
     if (_flags.isAnimatingAPresentationOrDismissal == NO) {
         _flags.isManuallyResizingTheScrollViewFrame = YES;
         self.scrollView.frame = self.view.bounds;
@@ -1506,8 +1505,8 @@ typedef struct {
 - (UIEdgeInsets)contentInsetForScrollView:(CGFloat)targetZoomScale {
     NSLog(@"contentInsetForScrollView:%f",targetZoomScale);
     UIEdgeInsets inset = UIEdgeInsetsZero;
-    CGFloat boundsHeight = self.scrollView.bounds.size.height;
-    CGFloat boundsWidth = self.scrollView.bounds.size.width;
+    CGFloat boundsHeight = self.view.bounds.size.height;
+    CGFloat boundsWidth = self.view.bounds.size.width;
     CGFloat contentHeight = (self.image.size.height > 0) ? self.image.size.height : boundsHeight;
     CGFloat contentWidth = (self.image.size.width > 0) ? self.image.size.width : boundsWidth;
     CGFloat minContentHeight;
