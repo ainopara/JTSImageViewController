@@ -647,7 +647,7 @@ typedef struct {
         
         CGFloat duration = JTSImageViewController_TransitionAnimationDuration;
         if (USE_DEBUG_SLOW_ANIMATIONS == 1) {
-            duration *= 4;
+            duration *= 4 * 3;
         }
         
         __weak JTSImageViewController *weakSelf = self;
@@ -725,7 +725,7 @@ typedef struct {
                          endFrameForImageView = [weakSelf resizedFrameForAutorotatingImageView:weakSelf.imageInfo.referenceRect.size];
                      }
                      weakSelf.imageView.frame = endFrameForImageView;
-                     UIEdgeInsets inset = [self contentInsetForScrollView:self.scrollView.zoomScale];
+                     UIEdgeInsets inset = [self contentInsetForScrollViewWithZoomScale:self.scrollView.zoomScale];
                      CGPoint endCenterForImageView = CGPointMake(inset.left + endFrameForImageView.origin.x + endFrameForImageView.size.width/2.0f, inset.top + endFrameForImageView.origin.y + endFrameForImageView.size.height/2.0f);
                      weakSelf.imageView.center = endCenterForImageView;
                      
@@ -1495,7 +1495,7 @@ typedef struct {
         }
         self.scrollView.contentSize = self.imageView.frame.size;
         NSLog(@"%f",self.scrollView.contentSize.width);
-        self.scrollView.contentInset = [self contentInsetForScrollView:self.scrollView.zoomScale];
+        self.scrollView.contentInset = [self contentInsetForScrollViewWithZoomScale:self.scrollView.zoomScale];
     }
 }
 
@@ -1511,8 +1511,8 @@ typedef struct {
     self.textView.contentOffset = CGPointMake(0, 0 - insets.top);
 }
 
-- (UIEdgeInsets)contentInsetForScrollView:(CGFloat)targetZoomScale {
-    NSLog(@"contentInsetForScrollView:%f",targetZoomScale);
+- (UIEdgeInsets)contentInsetForScrollViewWithZoomScale:(CGFloat)targetZoomScale {
+    NSLog(@"contentInsetForScrollViewWithZoomScale:%f",targetZoomScale);
     UIEdgeInsets inset = UIEdgeInsetsZero;
     CGFloat boundsHeight = self.view.bounds.size.height;
     CGFloat boundsWidth = self.view.bounds.size.width;
@@ -1537,11 +1537,9 @@ typedef struct {
             minContentWidth = contentWidth * (minContentHeight / contentHeight);
         }
     }
-    CGFloat myHeight = self.view.bounds.size.height;
-    CGFloat myWidth = self.view.bounds.size.width;
     minContentWidth *= targetZoomScale;
     minContentHeight *= targetZoomScale;
-    if (minContentHeight > myHeight && minContentWidth > myWidth) {
+    if (minContentHeight > boundsHeight && minContentWidth > boundsWidth) {
         inset = UIEdgeInsetsZero;
     } else {
         CGFloat verticalDiff = boundsHeight - minContentHeight;
@@ -1618,7 +1616,7 @@ typedef struct {
         return;
     }
     
-    scrollView.contentInset = [self contentInsetForScrollView:scrollView.zoomScale];
+    scrollView.contentInset = [self contentInsetForScrollViewWithZoomScale:scrollView.zoomScale];
     
     if (self.scrollView.scrollEnabled == NO) {
         self.scrollView.scrollEnabled = YES;
@@ -1636,7 +1634,7 @@ typedef struct {
     }
     
     self.scrollView.scrollEnabled = (scale > 1);
-    self.scrollView.contentInset = [self contentInsetForScrollView:scale];
+    self.scrollView.contentInset = [self contentInsetForScrollViewWithZoomScale:scale];
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
@@ -1689,13 +1687,13 @@ typedef struct {
         CGFloat zoomWidth = self.view.bounds.size.width / JTSImageViewController_TargetZoomForDoubleTap;
         CGFloat zoomHeight = self.view.bounds.size.height / JTSImageViewController_TargetZoomForDoubleTap;
         targetZoomRect = CGRectMake(point.x - (zoomWidth/2.0f), point.y - (zoomHeight/2.0f), zoomWidth, zoomHeight);
-        targetInsets = [self contentInsetForScrollView:JTSImageViewController_TargetZoomForDoubleTap];
+        targetInsets = [self contentInsetForScrollViewWithZoomScale:JTSImageViewController_TargetZoomForDoubleTap];
     } else {
         self.scrollView.accessibilityHint = self.accessibilityHintZoomedOut;
         CGFloat zoomWidth = self.view.bounds.size.width * self.scrollView.zoomScale;
         CGFloat zoomHeight = self.view.bounds.size.height * self.scrollView.zoomScale;
         targetZoomRect = CGRectMake(point.x - (zoomWidth/2.0f), point.y - (zoomHeight/2.0f), zoomWidth, zoomHeight);
-        targetInsets = [self contentInsetForScrollView:1.0f];
+        targetInsets = [self contentInsetForScrollViewWithZoomScale:1.0f];
     }
     self.view.userInteractionEnabled = NO;
     
