@@ -1881,7 +1881,6 @@ typedef struct {
                  self.imageView.transform = CGAffineTransformIdentity;
                  if (self.scrollView.dragging == NO && self.scrollView.decelerating == NO) {
                      self.imageView.center = CGPointMake(self.scrollView.contentSize.width/2.0f, self.scrollView.contentSize.height/2.0f);
-                     [self updateScrollViewAndImageViewForCurrentMetrics];
                  }
              }
          } completion:nil];
