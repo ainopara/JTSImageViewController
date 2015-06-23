@@ -1523,23 +1523,9 @@ typedef struct {
     CGFloat contentWidth = (self.image.size.width > 0) ? self.image.size.width : self.imageInfo.referenceRect.size.width;
     CGFloat minContentHeight;
     CGFloat minContentWidth;
-    if (contentHeight > contentWidth) {
-        if (boundsHeight/boundsWidth < contentHeight/contentWidth) {
-            minContentHeight = boundsHeight;
-            minContentWidth = contentWidth * (minContentHeight / contentHeight);
-        } else {
-            minContentWidth = boundsWidth;
-            minContentHeight = contentHeight * (minContentWidth / contentWidth);
-        }
-    } else {
-        if (boundsWidth/boundsHeight < contentWidth/contentHeight) {
-            minContentWidth = boundsWidth;
-            minContentHeight = contentHeight * (minContentWidth / contentWidth);
-        } else {
-            minContentHeight = boundsHeight;
-            minContentWidth = contentWidth * (minContentHeight / contentHeight);
-        }
-    }
+    CGSize imageZoomedSize = [self decideRawImageViewSizeWithImageSize:CGSizeMake(contentWidth, contentHeight)];
+    minContentWidth = imageZoomedSize.width;
+    minContentHeight = imageZoomedSize.height;
     minContentWidth *= targetZoomScale;
     minContentHeight *= targetZoomScale;
     if (minContentHeight > boundsHeight && minContentWidth > boundsWidth) {
