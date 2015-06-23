@@ -61,7 +61,7 @@ typedef struct {
     BOOL imageDownloadFailed;
 } JTSImageViewControllerFlags;
 
-#define USE_DEBUG_SLOW_ANIMATIONS 1
+#define USE_DEBUG_SLOW_ANIMATIONS 0
 
 ///--------------------------------------------------------------------------------------------------------------------
 /// Anonymous Category
@@ -719,15 +719,17 @@ typedef struct {
                      }
                      
                      CGRect endFrameForImageView;
+                     UIEdgeInsets inset;
                      if (weakSelf.image) {
-                         endFrameForImageView = [weakSelf resizedFrameForAutorotatingImageView:weakSelf.image.size];
+                         endFrameForImageView.size = [weakSelf decideZoomedImageViewSizeWithImageSize:weakSelf.image.size];
+                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.image.size]];
                      } else {
-                         endFrameForImageView = [weakSelf resizedFrameForAutorotatingImageView:weakSelf.imageInfo.referenceRect.size];
+                         endFrameForImageView.size = [weakSelf decideZoomedImageViewSizeWithImageSize:weakSelf.imageInfo.referenceRect.size];
+                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.imageInfo.referenceRect.size]];
                      }
+                     
+                     endFrameForImageView = CGRectMake(inset.left, inset.top, endFrameForImageView.size.width, endFrameForImageView.size.height);
                      weakSelf.imageView.frame = endFrameForImageView;
-                     UIEdgeInsets inset = [self contentInsetForScrollViewWithZoomScale:self.scrollView.zoomScale];
-                     CGPoint endCenterForImageView = CGPointMake(inset.left + endFrameForImageView.origin.x + endFrameForImageView.size.width/2.0f, inset.top + endFrameForImageView.origin.y + endFrameForImageView.size.height/2.0f);
-                     weakSelf.imageView.center = endCenterForImageView;
                      
                      if (weakSelf.image == nil) {
                          weakSelf.progressContainer.alpha = 1.0f;
@@ -737,6 +739,7 @@ typedef struct {
                      
                      _flags.isManuallyResizingTheScrollViewFrame = YES;
                      weakSelf.scrollView.frame = weakSelf.view.bounds;
+                     weakSelf.scrollView.zoomScale = [weakSelf decideZoomScaleWithImageSize:weakSelf.image != nil ? weakSelf.image.size : weakSelf.imageInfo.referenceRect.size];
                      _flags.isManuallyResizingTheScrollViewFrame = NO;
                      [weakSelf.scrollView addSubview:weakSelf.imageView];
                      weakSelf.scrollView.contentOffset = CGPointMake(0,0);
@@ -1552,6 +1555,55 @@ typedef struct {
         inset.right = horizontalDiff/2.0f;
     }
     return inset;
+}
+
+
+
+- (CGSize)decideRawImageViewSizeWithImageSize:(CGSize)imageSize {
+    CGSize screenSize = self.view.bounds.size;
+    CGSize targetSize = screenSize;
+    
+    if (imageSize.width < screenSize.width && imageSize.height < screenSize.height) {
+        targetSize = imageSize;
+    } else if (screenSize.height/screenSize.width < imageSize.height/imageSize.width) {
+        targetSize.width = (screenSize.height / imageSize.height) * imageSize.width;
+    } else {
+        targetSize.height = (screenSize.width / imageSize.width) * imageSize.height;
+    }
+    return targetSize;
+}
+
+- (CGFloat)decideZoomScaleWithImageSize:(CGSize)imageSize {
+    CGSize screenSize = self.view.bounds.size;
+    CGSize targetSize = [self decideRawImageViewSizeWithImageSize:imageSize];
+    CGFloat imageRatio = imageSize.width/imageSize.height;
+    CGFloat scale = 1;
+    
+    if (imageSize.width < screenSize.width && imageSize.height < screenSize.height) {
+        return scale;
+    }
+    
+    if (imageRatio < 0.3) {
+        CGFloat preferedWidth = imageSize.width < screenSize.width ? imageSize.width : screenSize.width;
+        scale = preferedWidth / targetSize.width;
+        if (scale > self.scrollView.maximumZoomScale) {
+            scale = self.scrollView.maximumZoomScale;
+        }
+    }
+    if (imageRatio > 3) {
+        CGFloat preferedHeight = imageSize.height < screenSize.height ? imageSize.height : screenSize.height;
+        scale = preferedHeight / targetSize.height;
+        if (scale > self.scrollView.maximumZoomScale) {
+            scale = self.scrollView.maximumZoomScale;
+        }
+    }
+    return scale;
+}
+
+- (CGSize)decideZoomedImageViewSizeWithImageSize:(CGSize)imageSize {
+    CGSize rawImageViewSize = [self decideRawImageViewSizeWithImageSize:imageSize];
+    CGFloat scale = [self decideZoomScaleWithImageSize:imageSize];
+    return CGSizeMake(rawImageViewSize.width * scale, rawImageViewSize.height * scale);
 }
 
 - (CGRect)resizedFrameForAutorotatingImageView:(CGSize)imageSize {
