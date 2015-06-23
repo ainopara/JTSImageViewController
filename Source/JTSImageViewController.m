@@ -1519,8 +1519,8 @@ typedef struct {
     UIEdgeInsets inset = UIEdgeInsetsZero;
     CGFloat boundsHeight = self.view.bounds.size.height;
     CGFloat boundsWidth = self.view.bounds.size.width;
-    CGFloat contentHeight = (self.image.size.height > 0) ? self.image.size.height : boundsHeight;
-    CGFloat contentWidth = (self.image.size.width > 0) ? self.image.size.width : boundsWidth;
+    CGFloat contentHeight = (self.image.size.height > 0) ? self.image.size.height : self.imageInfo.referenceRect.size.height;
+    CGFloat contentWidth = (self.image.size.width > 0) ? self.image.size.width : self.imageInfo.referenceRect.size.width;
     CGFloat minContentHeight;
     CGFloat minContentWidth;
     if (contentHeight > contentWidth) {
