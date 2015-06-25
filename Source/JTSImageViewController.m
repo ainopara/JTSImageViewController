@@ -1493,8 +1493,10 @@ typedef struct {
     if (suppressAdjustments == NO) {
         if (self.image) {
             self.imageView.frame = [self resizedFrameForAutorotatingImageView:self.image.size];
+            self.scrollView.zoomScale = [self decideZoomScaleWithImageSize:self.image.size];
         } else {
             self.imageView.frame = [self resizedFrameForAutorotatingImageView:self.imageInfo.referenceRect.size];
+            self.scrollView.zoomScale = [self decideZoomScaleWithImageSize:self.imageInfo.referenceRect.size];
         }
         self.scrollView.contentSize = self.imageView.frame.size;
         NSLog(@"%f",self.scrollView.contentSize.width);
