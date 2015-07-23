@@ -292,8 +292,11 @@ typedef struct {
 }
 
 - (void)viewDidLayoutSubviews {
-    NSLog(@"viewDidLayoutSubviews");
-    [self updateLayoutsForCurrentOrientation];
+    NSString *systemVersion = [UIDevice currentDevice].systemVersion;
+    if (systemVersion.floatValue < 8.0) {
+        NSLog(@"viewDidLayoutSubviews");
+        [self updateLayoutsForCurrentOrientation];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -318,7 +321,8 @@ typedef struct {
 }
 
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
-    [self cancelCurrentImageDrag:NO];
+    self.scrollView.zoomScale = [self decideZoomScaleWithImageSize:self.image.size andScreenSize:self.view.bounds.size];
+    //[self cancelCurrentImageDrag:NO];
     [self updateLayoutsForCurrentOrientation];
     [self updateDimmingViewForCurrentZoomScale:NO];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, duration * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -333,10 +337,11 @@ typedef struct {
     _flags.isRotating = YES;
     typeof(self) __weak weakSelf = self;
     [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-        //typeof(self) strongSelf = weakSelf;
+        typeof(self) strongSelf = weakSelf;
+        strongSelf.scrollView.zoomScale = [strongSelf decideZoomScaleWithImageSize:self.image.size andScreenSize:size];
         //[strongSelf cancelCurrentImageDrag:NO];
-        //[strongSelf updateLayoutsForCurrentOrientation];
-        //[strongSelf updateDimmingViewForCurrentZoomScale:NO];
+        [strongSelf updateLayoutsForCurrentOrientation];
+        [strongSelf updateDimmingViewForCurrentZoomScale:NO];
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         typeof(self) strongSelf = weakSelf;
         strongSelf.lastUsedOrientation = [UIApplication sharedApplication].statusBarOrientation;
@@ -722,10 +727,10 @@ typedef struct {
                      UIEdgeInsets inset;
                      if (weakSelf.image) {
                          endFrameForImageView.size = [weakSelf decideZoomedImageViewSizeWithImageSize:weakSelf.image.size];
-                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.image.size]];
+                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.image.size andScreenSize:self.view.bounds.size]];
                      } else {
                          endFrameForImageView.size = [weakSelf decideZoomedImageViewSizeWithImageSize:weakSelf.imageInfo.referenceRect.size];
-                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.imageInfo.referenceRect.size]];
+                         inset = [self contentInsetForScrollViewWithZoomScale:[weakSelf decideZoomScaleWithImageSize:weakSelf.imageInfo.referenceRect.size andScreenSize:self.view.bounds.size]];
                      }
                      
                      endFrameForImageView = CGRectMake(inset.left, inset.top, endFrameForImageView.size.width, endFrameForImageView.size.height);
@@ -739,7 +744,7 @@ typedef struct {
                      
                      _flags.isManuallyResizingTheScrollViewFrame = YES;
                      weakSelf.scrollView.frame = weakSelf.view.bounds;
-                     weakSelf.scrollView.zoomScale = [weakSelf decideZoomScaleWithImageSize:weakSelf.image != nil ? weakSelf.image.size : weakSelf.imageInfo.referenceRect.size];
+                     weakSelf.scrollView.zoomScale = [weakSelf decideZoomScaleWithImageSize:weakSelf.image != nil ? weakSelf.image.size : weakSelf.imageInfo.referenceRect.size andScreenSize:self.view.bounds.size];
                      _flags.isManuallyResizingTheScrollViewFrame = NO;
                      [weakSelf.scrollView addSubview:weakSelf.imageView];
                      weakSelf.scrollView.contentOffset = CGPointMake(0,0);
@@ -1370,7 +1375,7 @@ typedef struct {
 
 - (void)updateLayoutsForCurrentOrientation {
     NSLog(@"updateLayoutsForCurrentOrientation");
-    NSLog(@"%d",_flags.isRotating);
+    NSLog(@"Rotating: %d",_flags.isRotating);
     if (self.mode == JTSImageViewControllerMode_Image) {
         [self updateScrollViewAndImageViewForCurrentMetrics];
         self.progressContainer.center = CGPointMake(self.view.bounds.size.width/2.0f, self.view.bounds.size.height/2.0f);
@@ -1499,7 +1504,7 @@ typedef struct {
         }
         self.imageView.frame = rect;
         self.scrollView.contentSize = self.imageView.frame.size;
-        NSLog(@"%f",self.scrollView.contentSize.width);
+        NSLog(@"scrollview width:%f",self.scrollView.contentSize.width);
         self.scrollView.contentInset = [self contentInsetForScrollViewWithZoomScale:self.scrollView.zoomScale];
     }
 }
@@ -1516,41 +1521,40 @@ typedef struct {
     self.textView.contentOffset = CGPointMake(0, 0 - insets.top);
 }
 
+#pragma mark - Decide Size
+
 - (UIEdgeInsets)contentInsetForScrollViewWithZoomScale:(CGFloat)targetZoomScale {
     NSLog(@"contentInsetForScrollViewWithZoomScale:%f",targetZoomScale);
     UIEdgeInsets inset = UIEdgeInsetsZero;
     CGFloat boundsHeight = self.view.bounds.size.height;
     CGFloat boundsWidth = self.view.bounds.size.width;
-    CGFloat contentHeight = (self.image.size.height > 0) ? self.image.size.height : self.imageInfo.referenceRect.size.height;
-    CGFloat contentWidth = (self.image.size.width > 0) ? self.image.size.width : self.imageInfo.referenceRect.size.width;
-    CGFloat minContentHeight;
-    CGFloat minContentWidth;
-    CGSize imageZoomedSize = [self decideRawImageViewSizeWithImageSize:CGSizeMake(contentWidth, contentHeight)];
-    minContentWidth = imageZoomedSize.width;
-    minContentHeight = imageZoomedSize.height;
-    minContentWidth *= targetZoomScale;
-    minContentHeight *= targetZoomScale;
-    if (minContentHeight > boundsHeight && minContentWidth > boundsWidth) {
+    
+    CGFloat rawContentHeight = (self.image.size.height > 0) ? self.image.size.height : self.imageInfo.referenceRect.size.height;
+    CGFloat rawContentWidth = (self.image.size.width > 0) ? self.image.size.width : self.imageInfo.referenceRect.size.width;
+    CGSize rawImageSize = CGSizeMake(rawContentWidth, rawContentHeight);
+    
+    CGSize minImageZoomedSize = [self decideRawImageViewSizeWithImageSize:rawImageSize andScreenSize:self.scrollView.bounds.size];
+    CGFloat contentWidth = minImageZoomedSize.width * targetZoomScale;
+    CGFloat contentHeight = minImageZoomedSize.height * targetZoomScale;
+    
+    if (contentHeight > boundsHeight && contentWidth > boundsWidth) {
         inset = UIEdgeInsetsZero;
     } else {
-        CGFloat verticalDiff = boundsHeight - minContentHeight;
-        CGFloat horizontalDiff = boundsWidth - minContentWidth;
-        verticalDiff = (verticalDiff > 0) ? verticalDiff : 0;
-        horizontalDiff = (horizontalDiff > 0) ? horizontalDiff : 0;
+        CGFloat verticalDiff = boundsHeight - contentHeight;
+        CGFloat horizontalDiff = boundsWidth - contentWidth;
+        verticalDiff = fmax(verticalDiff, 0);
+        horizontalDiff = fmax(horizontalDiff, 0);
         inset.top = verticalDiff/2.0f;
         inset.bottom = verticalDiff/2.0f;
         inset.left = horizontalDiff/2.0f;
         inset.right = horizontalDiff/2.0f;
     }
+    NSLog(@"insets: %f, %f",inset.left, inset.right);
     return inset;
 }
 
-#pragma mark - Decide Size
-
-- (CGSize)decideRawImageViewSizeWithImageSize:(CGSize)imageSize {
-    CGSize screenSize = self.view.bounds.size;
+- (CGSize)decideRawImageViewSizeWithImageSize:(CGSize)imageSize andScreenSize:(CGSize)screenSize {
     CGSize targetSize = screenSize;
-    
     if (imageSize.width < screenSize.width && imageSize.height < screenSize.height) {
         targetSize = imageSize;
     } else if (screenSize.height/screenSize.width < imageSize.height/imageSize.width) {
@@ -1558,39 +1562,42 @@ typedef struct {
     } else {
         targetSize.height = (screenSize.width / imageSize.width) * imageSize.height;
     }
+    //NSLog(@"rawSize:%f,%f",targetSize.width, targetSize.height);
     return targetSize;
 }
 
-- (CGFloat)decideZoomScaleWithImageSize:(CGSize)imageSize {
-    CGSize screenSize = self.view.bounds.size;
-    CGSize targetSize = [self decideRawImageViewSizeWithImageSize:imageSize];
+- (CGFloat)decideZoomScaleWithImageSize:(CGSize)imageSize andScreenSize:(CGSize)screenSize {
+    //NSLog(@"decideZoomScaleWithImageSize:%f,%f",imageSize.width, imageSize.height);
+    //NSLog(@"andScreenSize:%f,%f",screenSize.width, screenSize.height);
+
+    CGSize targetSize = [self decideRawImageViewSizeWithImageSize:imageSize andScreenSize:screenSize];
     CGFloat imageRatio = imageSize.width/imageSize.height;
     CGFloat scale = 1;
     
     if (imageSize.width < screenSize.width && imageSize.height < screenSize.height) {
         return scale;
     }
-    
+    // Auto Zoom In
     if (imageRatio < 0.3) {
-        CGFloat preferedWidth = imageSize.width < screenSize.width ? imageSize.width : screenSize.width;
+        CGFloat preferedWidth = fmin(imageSize.width, screenSize.width);
         scale = preferedWidth / targetSize.width;
         if (scale > self.scrollView.maximumZoomScale) {
             scale = self.scrollView.maximumZoomScale;
         }
-    }
-    if (imageRatio > 3) {
-        CGFloat preferedHeight = imageSize.height < screenSize.height ? imageSize.height : screenSize.height;
+    }else if (imageRatio > 3) {
+        CGFloat preferedHeight = fmin(imageSize.height, screenSize.height);
         scale = preferedHeight / targetSize.height;
         if (scale > self.scrollView.maximumZoomScale) {
             scale = self.scrollView.maximumZoomScale;
         }
     }
+    NSLog(@"scale:%f",scale);
     return scale;
 }
 
 - (CGSize)decideZoomedImageViewSizeWithImageSize:(CGSize)imageSize {
-    CGSize rawImageViewSize = [self decideRawImageViewSizeWithImageSize:imageSize];
-    CGFloat scale = [self decideZoomScaleWithImageSize:imageSize];
+    CGSize rawImageViewSize = [self decideRawImageViewSizeWithImageSize:imageSize andScreenSize:self.view.bounds.size];
+    CGFloat scale = [self decideZoomScaleWithImageSize:imageSize andScreenSize:self.view.bounds.size];
     return CGSizeMake(rawImageViewSize.width * scale, rawImageViewSize.height * scale);
 }
 
@@ -1642,15 +1649,13 @@ typedef struct {
 #pragma mark - Update Dimming View for Zoom Scale
 
 - (void)updateDimmingViewForCurrentZoomScale:(BOOL)animated {
+    NSLog(@"updateDimmingViewForCurrentZoomScale");
     CGFloat zoomScale = self.scrollView.zoomScale;
     CGFloat baseAlpha = self.alphaForBackgroundDimmingOverlay;
     CGFloat targetAlpha = (zoomScale > 1.0) ? baseAlpha * ((zoomScale - 1.0)/2.0 + 1.0) : baseAlpha * (zoomScale - 0.5) * 2.0;
-    if (targetAlpha > 1.0) {
-        targetAlpha = 1.0;
-    }
-    if (targetAlpha < 0.0) {
-        targetAlpha = 0.0;
-    }
+    if (targetAlpha > 1.0) { targetAlpha = 1.0; }
+    if (targetAlpha < 0.0) { targetAlpha = 0.0; }
+    
     CGFloat duration = (animated) ? 0.35 : 0;
     [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionBeginFromCurrentState animations:^{
         if ([self.animationDelegate respondsToSelector:@selector(imageViewer:willAdjustInterfaceForZoomScale:withContainerView:duration:)]) {
