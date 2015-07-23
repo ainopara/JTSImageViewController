@@ -295,8 +295,9 @@ typedef struct {
     NSString *systemVersion = [UIDevice currentDevice].systemVersion;
     if (systemVersion.floatValue < 8.0) {
         NSLog(@"viewDidLayoutSubviews");
-        [self updateLayoutsForCurrentOrientation];
+        
     }
+    [self updateLayoutsForCurrentOrientation];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
