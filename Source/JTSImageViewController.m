@@ -134,7 +134,6 @@ typedef struct {
     
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:) name:UIDeviceOrientationDidChangeNotification object:nil];
         _imageInfo = imageInfo;
         _currentSnapshotRotationTransform = CGAffineTransformIdentity;
         _mode = mode;
@@ -202,7 +201,6 @@ typedef struct {
 #pragma mark - NSObject
 
 - (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
     [_imageDownloadDataTask cancel];
     [self cancelProgressTimer];
 }
@@ -292,11 +290,7 @@ typedef struct {
 }
 
 - (void)viewDidLayoutSubviews {
-    NSString *systemVersion = [UIDevice currentDevice].systemVersion;
-    if (systemVersion.floatValue < 8.0) {
-        NSLog(@"viewDidLayoutSubviews");
-        
-    }
+    NSLog(@"viewDidLayoutSubviews");
     [self updateLayoutsForCurrentOrientation];
 }
 
@@ -314,7 +308,7 @@ typedef struct {
     [super viewDidAppear:animated];
     _flags.viewHasAppeared = YES;
 }
-#pragma mark - Rotating Methods Only Used In iOS7
+#pragma mark - Rotating Event (iOS7)
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation duration:(NSTimeInterval)duration {
     self.lastUsedOrientation = toInterfaceOrientation;
     _flags.rotationTransformIsDirty = YES;
@@ -330,7 +324,9 @@ typedef struct {
         _flags.isRotating = NO;
     });
 }
-#pragma mark - Rotating Event Marker
+
+#pragma mark - Size Change Event (iOS8+)
+
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_7_1
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
     NSLog(@"viewWillTransitionToSize:%f, %f", size.width, size.height);
@@ -352,47 +348,6 @@ typedef struct {
     }];
 }
 #endif
-
-- (void)deviceOrientationDidChange:(NSNotification *)notification {
-    NSLog(@"deviceOrientationDidChange");
-    return;
-    NSString *systemVersion = [UIDevice currentDevice].systemVersion;
-    if (systemVersion.floatValue < 8.0) {
-        // Early Return
-        return;
-    }
-    /*
-     viewWillTransitionToSize:withTransitionCoordinator: is not called when rotating from
-     one landscape orientation to the other (or from one portrait orientation to another). 
-     This makes it difficult to preserve the desired behavior of JTSImageViewController. 
-     We want the background snapshot to maintain the illusion that it never rotates. The 
-     only other way to ensure that the background snapshot stays in the correct orientation 
-     is to listen for this notification and respond when we've detected a landscape-to-landscape rotation.
-    */
-    UIDeviceOrientation deviceOrientation = [UIDevice currentDevice].orientation;
-    BOOL landscapeToLandscape = UIDeviceOrientationIsLandscape(deviceOrientation) && UIInterfaceOrientationIsLandscape(self.lastUsedOrientation);
-    BOOL portraitToPortrait = UIDeviceOrientationIsPortrait(deviceOrientation) && UIInterfaceOrientationIsPortrait(self.lastUsedOrientation);
-    if (landscapeToLandscape || portraitToPortrait) {
-        UIInterfaceOrientation newInterfaceOrientation = (UIInterfaceOrientation)deviceOrientation;
-        if (newInterfaceOrientation != self.lastUsedOrientation) {
-            self.lastUsedOrientation = newInterfaceOrientation;
-            _flags.rotationTransformIsDirty = YES;
-            _flags.isRotating = YES;
-            typeof(self) __weak weakSelf = self;
-            [UIView animateWithDuration:0.6 animations:^{
-                typeof(self) strongSelf = weakSelf;
-                [strongSelf cancelCurrentImageDrag:NO];
-                [strongSelf updateLayoutsForCurrentOrientation];
-                [strongSelf updateDimmingViewForCurrentZoomScale:NO];
-            } completion:^(BOOL finished) {
-                typeof(self) strongSelf = weakSelf;
-                JTSImageViewControllerFlags flags = strongSelf.flags;
-                flags.isRotating = NO;
-                strongSelf.flags = flags;
-            }];
-        }
-    }
-}
 
 #pragma mark - Setup
 
@@ -1534,7 +1489,7 @@ typedef struct {
     CGFloat rawContentWidth = (self.image.size.width > 0) ? self.image.size.width : self.imageInfo.referenceRect.size.width;
     CGSize rawImageSize = CGSizeMake(rawContentWidth, rawContentHeight);
     
-    CGSize minImageZoomedSize = [self decideRawImageViewSizeWithImageSize:rawImageSize andScreenSize:self.scrollView.bounds.size];
+    CGSize minImageZoomedSize = [self decideRawImageViewSizeWithImageSize:rawImageSize andScreenSize:self.view.bounds.size];
     CGFloat contentWidth = minImageZoomedSize.width * targetZoomScale;
     CGFloat contentHeight = minImageZoomedSize.height * targetZoomScale;
     
