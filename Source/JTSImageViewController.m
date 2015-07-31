@@ -290,12 +290,12 @@ typedef struct {
 }
 
 - (void)viewDidLayoutSubviews {
-    NSLog(@"viewDidLayoutSubviews");
+    // NSLog(@"viewDidLayoutSubviews");
     [self updateLayoutsForCurrentOrientation];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    NSLog(@"viewWillAppear");
+    // NSLog(@"viewWillAppear");
     [super viewWillAppear:animated];
     if (self.lastUsedOrientation != [UIApplication sharedApplication].statusBarOrientation) {
         self.lastUsedOrientation = [UIApplication sharedApplication].statusBarOrientation;
@@ -329,7 +329,7 @@ typedef struct {
 
 #if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_7_1
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
-    NSLog(@"viewWillTransitionToSize:%f, %f", size.width, size.height);
+    // NSLog(@"viewWillTransitionToSize:%f, %f", size.width, size.height);
     _flags.rotationTransformIsDirty = YES;
     _flags.isRotating = YES;
     typeof(self) __weak weakSelf = self;
@@ -352,7 +352,7 @@ typedef struct {
 #pragma mark - Setup
 
 - (void)setupImageAndDownloadIfNecessary:(JTSImageInfo *)imageInfo {
-    NSLog(@"setupImageAndDownloadIfNecessary");
+    // NSLog(@"setupImageAndDownloadIfNecessary");
     if (imageInfo.image) {
         self.image = imageInfo.image;
     }
@@ -389,7 +389,7 @@ typedef struct {
 }
 
 - (void)viewDidLoadForImageMode {
-    NSLog(@"viewDidLoadForImageMode");
+    // NSLog(@"viewDidLoadForImageMode");
     self.view.backgroundColor = [UIColor blackColor];
     self.view.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     
@@ -503,7 +503,7 @@ typedef struct {
 }
 
 - (void)setupImageModeGestureRecognizers {
-    NSLog(@"setupImageModeGestureRecognizers");
+    // NSLog(@"setupImageModeGestureRecognizers");
     self.doubleTapperPhoto = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(imageDoubleTapped:)];
     self.doubleTapperPhoto.numberOfTapsRequired = 2;
     self.doubleTapperPhoto.delegate = self;
@@ -529,7 +529,7 @@ typedef struct {
 }
 
 - (void)setupTextViewTapGestureRecognizer {
-    NSLog(@"setupTextViewTapGestureRecognizer");
+    // NSLog(@"setupTextViewTapGestureRecognizer");
     self.singleTapperText = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(textViewSingleTapped:)];
     self.singleTapperText.delegate = self;
     [self.textView addGestureRecognizer:self.singleTapperText];
@@ -538,7 +538,7 @@ typedef struct {
 #pragma mark - Presentation
 
 - (void)showImageViewerByExpandingFromOriginalPositionFromViewController:(UIViewController *)viewController {
-    NSLog(@"showImageViewerByExpandingFromOriginalPositionFromViewController");
+    // NSLog(@"showImageViewerByExpandingFromOriginalPositionFromViewController");
     _flags.isAnimatingAPresentationOrDismissal = YES;
     self.view.userInteractionEnabled = NO;
 
@@ -722,7 +722,7 @@ typedef struct {
 }
 
 - (void)showImageViewerByScalingDownFromOffscreenPositionWithViewController:(UIViewController *)viewController {
-    NSLog(@"showImageViewerByScalingDownFromOffscreenPositionWithViewController");
+    // NSLog(@"showImageViewerByScalingDownFromOffscreenPositionWithViewController");
     _flags.isAnimatingAPresentationOrDismissal = YES;
     self.view.userInteractionEnabled = NO;
     
@@ -975,7 +975,7 @@ typedef struct {
 #pragma mark - Dismissal
 
 - (void)dismissByCollapsingImageBackToOriginalPosition {
-    NSLog(@"dismissByCollapsingImageBackToOriginalPosition");
+    // NSLog(@"dismissByCollapsingImageBackToOriginalPosition");
     self.view.userInteractionEnabled = NO;
     _flags.isAnimatingAPresentationOrDismissal = YES;
     _flags.isDismissing = YES;
@@ -1314,7 +1314,7 @@ typedef struct {
 #pragma mark - Interface Updates
 
 - (void)updateInterfaceWithImage:(UIImage *)image {
-    NSLog(@"updateInterfaceWithImage");
+    // NSLog(@"updateInterfaceWithImage");
     if (image) {
         self.image = image;
         self.imageView.image = image;
@@ -1330,8 +1330,8 @@ typedef struct {
 }
 
 - (void)updateLayoutsForCurrentOrientation {
-    NSLog(@"updateLayoutsForCurrentOrientation");
-    NSLog(@"Rotating: %d",_flags.isRotating);
+    // NSLog(@"updateLayoutsForCurrentOrientation");
+    // NSLog(@"Rotating: %d",_flags.isRotating);
     if (self.mode == JTSImageViewControllerMode_Image) {
         [self updateScrollViewAndImageViewForCurrentMetrics];
         self.progressContainer.center = CGPointMake(self.view.bounds.size.width/2.0f, self.view.bounds.size.height/2.0f);
@@ -1341,7 +1341,7 @@ typedef struct {
             [self verticallyCenterTextInTextView];
         }
     }
-    
+    // Update Snapshot View's Transform and Frame
     CGAffineTransform transform = CGAffineTransformIdentity;
     
     if (_startingInfo.startingInterfaceOrientation == UIInterfaceOrientationPortrait) {
@@ -1440,7 +1440,7 @@ typedef struct {
 }
 
 - (void)updateScrollViewAndImageViewForCurrentMetrics {
-    NSLog(@"updateScrollViewAndImageViewForCurrentMetrics");
+    // NSLog(@"updateScrollViewAndImageViewForCurrentMetrics");
     if (_flags.isAnimatingAPresentationOrDismissal == NO) {
         _flags.isManuallyResizingTheScrollViewFrame = YES;
         self.scrollView.frame = self.view.bounds;
@@ -1460,7 +1460,7 @@ typedef struct {
         }
         self.imageView.frame = rect;
         self.scrollView.contentSize = self.imageView.frame.size;
-        NSLog(@"scrollview width:%f",self.scrollView.contentSize.width);
+        // NSLog(@"scrollview width:%f",self.scrollView.contentSize.width);
         self.scrollView.contentInset = [self contentInsetForScrollViewWithZoomScale:self.scrollView.zoomScale];
     }
 }
@@ -1480,7 +1480,7 @@ typedef struct {
 #pragma mark - Decide Size
 
 - (UIEdgeInsets)contentInsetForScrollViewWithZoomScale:(CGFloat)targetZoomScale {
-    NSLog(@"contentInsetForScrollViewWithZoomScale:%f",targetZoomScale);
+    // NSLog(@"contentInsetForScrollViewWithZoomScale:%f",targetZoomScale);
     UIEdgeInsets inset = UIEdgeInsetsZero;
     CGFloat boundsHeight = self.view.bounds.size.height;
     CGFloat boundsWidth = self.view.bounds.size.width;
@@ -1505,7 +1505,7 @@ typedef struct {
         inset.left = horizontalDiff/2.0f;
         inset.right = horizontalDiff/2.0f;
     }
-    NSLog(@"insets: %f, %f",inset.left, inset.right);
+    // NSLog(@"insets: %f, %f",inset.left, inset.right);
     return inset;
 }
 
@@ -1547,7 +1547,7 @@ typedef struct {
             scale = self.scrollView.maximumZoomScale;
         }
     }
-    NSLog(@"scale:%f",scale);
+    // NSLog(@"scale:%f",scale);
     return scale;
 }
 
@@ -1564,7 +1564,7 @@ typedef struct {
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView {
-    NSLog(@"scrollViewDidZoom");
+    // NSLog(@"scrollViewDidZoom");
     if (_flags.imageIsFlickingAwayForDismissal) {
         return;
     }
@@ -1581,7 +1581,7 @@ typedef struct {
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale {
-    NSLog(@"scrollViewDidEndZooming");
+    // NSLog(@"scrollViewDidEndZooming");
     if (_flags.imageIsFlickingAwayForDismissal) {
         return;
     }
@@ -1605,7 +1605,7 @@ typedef struct {
 #pragma mark - Update Dimming View for Zoom Scale
 
 - (void)updateDimmingViewForCurrentZoomScale:(BOOL)animated {
-    NSLog(@"updateDimmingViewForCurrentZoomScale");
+    // NSLog(@"updateDimmingViewForCurrentZoomScale");
     CGFloat zoomScale = self.scrollView.zoomScale;
     CGFloat baseAlpha = self.alphaForBackgroundDimmingOverlay;
     CGFloat targetAlpha = (zoomScale > 1.0) ? baseAlpha * ((zoomScale - 1.0)/2.0 + 1.0) : baseAlpha * (zoomScale - 0.5) * 2.0;
@@ -1635,10 +1635,10 @@ typedef struct {
     UIEdgeInsets targetInsets;
     if (self.scrollView.zoomScale == 1.0f) {
         self.scrollView.accessibilityHint = self.accessibilityHintZoomedIn;
-        CGFloat zoomWidth = self.view.bounds.size.width / JTSImageViewController_TargetZoomForDoubleTap;
-        CGFloat zoomHeight = self.view.bounds.size.height / JTSImageViewController_TargetZoomForDoubleTap;
+        CGFloat zoomWidth = self.view.bounds.size.width / fmax([self decideZoomScaleWithImageSize:self.image.size andScreenSize:self.view.bounds.size],JTSImageViewController_TargetZoomForDoubleTap);
+        CGFloat zoomHeight = self.view.bounds.size.height / fmax([self decideZoomScaleWithImageSize:self.image.size andScreenSize:self.view.bounds.size],JTSImageViewController_TargetZoomForDoubleTap);
         targetZoomRect = CGRectMake(point.x - (zoomWidth/2.0f), point.y - (zoomHeight/2.0f), zoomWidth, zoomHeight);
-        targetInsets = [self contentInsetForScrollViewWithZoomScale:JTSImageViewController_TargetZoomForDoubleTap];
+        targetInsets = [self contentInsetForScrollViewWithZoomScale:fmax([self decideZoomScaleWithImageSize:self.image.size andScreenSize:self.view.bounds.size],JTSImageViewController_TargetZoomForDoubleTap)];
     } else {
         self.scrollView.accessibilityHint = self.accessibilityHintZoomedOut;
         CGFloat zoomWidth = self.view.bounds.size.width * self.scrollView.zoomScale;
