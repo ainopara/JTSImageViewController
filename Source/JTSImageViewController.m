@@ -1324,6 +1324,7 @@ typedef struct {
         
         // Don't update the layouts during a drag.
         if (_flags.isDraggingImage == NO) {
+            self.scrollView.zoomScale = [self decideZoomScaleWithImageSize:self.image.size andScreenSize:self.view.frame.size];
             [self updateLayoutsForCurrentOrientation];
         }
     }
