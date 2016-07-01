@@ -19,7 +19,7 @@
     if (imageURL.absoluteString.length) {
         
         NSURLRequest *request = [NSURLRequest requestWithURL:imageURL];
-        
+
         if (request == nil) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) {
@@ -28,26 +28,41 @@
             });
         }
         else {
-            
-            NSURLSession *sesh = [NSURLSession sharedSession];
-            
-            dataTask = [sesh dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                
+            NSCachedURLResponse *cachedResponse = [[NSURLCache sharedURLCache] cachedResponseForRequest:request];
+            if (cachedResponse != nil) {
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                    
-                    UIImage *image = [self imageFromData:data forURL:imageURL canonicalURL:canonicalURL];
-                    
+
+                    UIImage *image = [self imageFromData:cachedResponse.data forURL:imageURL canonicalURL:canonicalURL];
+
                     dispatch_async(dispatch_get_main_queue(), ^{
                         if (completion) {
                             completion(image);
                         }
                     });
-                    
+
                 });
+            }
+            else {
+                NSURLSession *sesh = [NSURLSession sharedSession];
+
+                dataTask = [sesh dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+
+                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+                        UIImage *image = [self imageFromData:data forURL:imageURL canonicalURL:canonicalURL];
+
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (completion) {
+                                completion(image);
+                            }
+                        });
+                        
+                    });
+
+                }];
                 
-            }];
-            
-            [dataTask resume];
+                [dataTask resume];
+            }
         }
     }
     
@@ -71,9 +86,3 @@
 }
 
 @end
-
-
-
-
-
-
