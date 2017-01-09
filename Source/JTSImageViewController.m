@@ -78,6 +78,7 @@ typedef struct {
 // General Info
 @property (strong, nonatomic, readwrite) JTSImageInfo *imageInfo;
 @property (strong, nonatomic, readwrite) UIImage *image;
+@property (strong, nonatomic, readwrite) NSData *imageData;
 @property (assign, nonatomic, readwrite) JTSImageViewControllerTransition transition;
 @property (assign, nonatomic, readwrite) JTSImageViewControllerMode mode;
 @property (assign, nonatomic, readwrite) JTSImageViewControllerBackgroundOptions backgroundOptions;
@@ -364,10 +365,11 @@ typedef struct {
         _flags.imageIsBeingReadFromDisk = fromDisk;
         
         typeof(self) __weak weakSelf = self;
-        NSURLSessionDataTask *task = [JTSSimpleImageDownloader downloadImageForURL:imageInfo.imageURL canonicalURL:imageInfo.canonicalImageURL completion:^(UIImage *image) {
+        NSURLSessionDataTask *task = [JTSSimpleImageDownloader downloadImageForURL:imageInfo.imageURL canonicalURL:imageInfo.canonicalImageURL completion:^(UIImage *image, NSData *data) {
             typeof(self) strongSelf = weakSelf;
             [strongSelf cancelProgressTimer];
             if (image) {
+                strongSelf.imageData = data;
                 if (strongSelf.isViewLoaded) {
                     [strongSelf updateInterfaceWithImage:image];
                 } else {
